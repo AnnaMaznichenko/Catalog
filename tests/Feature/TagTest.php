@@ -13,7 +13,7 @@ class TagTest extends TestCase
 
     public function test_tags_index(): void
     {
-        $this->artisan("db:seed");
+        Tag::factory(10)->create();
         $response = $this->get('/api/tags');
         $response->assertStatus(200);
         $jsonArray = $response->json();
