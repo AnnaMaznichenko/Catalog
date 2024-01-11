@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\Item;
+use App\Models\Tag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
@@ -41,62 +42,85 @@ class ItemTest extends TestCase
     public function test_items_create()
     {
         $category = Category::factory()-> create();
-        $attributes = [
+        $tag = Tag::factory()->create();
+        $attributesItem = [
             "name" => "new item",
             "id_category" => $category->id,
         ];
-        $response = $this->post("/api/items", $attributes);
+        $attribytesTag = ["id_tags" => [$tag->id]];
+        $response = $this->post("/api/items", array_merge($attributesItem, $attribytesTag));
         $response->assertStatus(201);
-        $this->assertDatabaseHas("items", $attributes);
+        $jsonArray = $response->json();
+        $this->assertDatabaseHas("items", $attributesItem);
+        $this->assertDatabaseHas("tag_item", [
+            "id_item" => $jsonArray["id"],
+            "id_tag" => $tag->id,
+        ]);
     }
 
     public function test_items_create_validation()
     {
-        $attributes = [
+        $attributesItem = [
             "name" => "",
             "id_category" => -1,
         ];
-        $response = $this->post("/api/items", $attributes);
+        $attributesTag = ["id_tags" => [-1]];
+        $response = $this->post("/api/items", array_merge($attributesItem, $attributesTag));
         $jsonArray = $response->json();
+        var_dump($jsonArray);
         $response->assertStatus(400);
-        $this->assertDatabaseMissing("items", $attributes);
+        $this->assertDatabaseMissing("items", $attributesItem);
         $this->assertEquals("The name field is required.", $jsonArray["name"][0]);
         $this->assertEquals("The selected id category is invalid.", $jsonArray["id_category"][0]);
+        $this->assertEquals("The selected id_tags.0 is invalid.", $jsonArray["id_tags.0"][0]);
     }
 
     public function test_items_update()
     {
         $item = Item::factory()->create();
         $category = Category::factory()-> create();
-        $attributes = [
+        $tag = Tag::factory()->create();
+        $attributesItem = [
             "name" => "new new item",
             "id_category" => $category->id,
         ];
-        $response = $this->patch("/api/items/" . $item->getKey(), $attributes);
+        $attributesTag = ["id_tags" => [$tag->id]];
+        $response = $this->patch("/api/items/" . $item->id, array_merge(
+            $attributesItem, $attributesTag
+        ));
         $response->assertStatus(202);
         $this->assertDatabaseHas("items", array_merge(
-            ["id" => $item->getKey()], $attributes
+            ["id" => $item->getKey()], $attributesItem
         ));
+        $this->assertDatabaseHas("tag_item", [
+            "id_item" => $item->id,
+            "id_tag" => $tag->id,
+        ]);
     }
 
     public function test_item_update_validation()
     {
         $item = Item::factory()->create();
-        $attributes = [
+        $attributesItem = [
             "name" => "",
             "id_category" => -1,
         ];
-        $response = $this->patch("/api/items/" . $item->getKey(), $attributes);
+        $attributesTag = ["id_tags" => [-1]];
+        $response = $this->patch("/api/items/" . $item->id, array_merge(
+            $attributesItem, $attributesTag
+        ));
         $jsonArray = $response->json();
         $response->assertStatus(400);
         $this->assertDatabaseMissing("items", array_merge(
-            ["id" => $item->getKey()], $attributes
+            ["id" => $item->getKey()], $attributesItem
         ));
+        $this->assertDatabaseMissing("tag_item", [
+            "id_item" => $item->id,
+            "id_tag" => $attributesTag["id_tags"]
+        ]);
         $this->assertEquals("The name field is required.", $jsonArray["name"][0]);
-        $this->assertEquals(
-            "The selected id category is invalid.",
-            $jsonArray["id_category"][0]
-        );
+        $this->assertEquals("The selected id category is invalid.", $jsonArray["id_category"][0]);
+        $this->assertEquals("The selected id_tags.0 is invalid.", $jsonArray["id_tags.0"][0]);
     }
 
     public function test_item_delete()

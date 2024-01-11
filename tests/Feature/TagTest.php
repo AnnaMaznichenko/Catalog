@@ -71,7 +71,7 @@ class TagTest extends TestCase
     {
         $tag = Tag::factory()->create();
         $attributes = [
-            "name" => "",
+            "name" => ""
         ];
         $response = $this->patch("/api/tags/" . $tag->getKey(), $attributes);
         $jsonArray = $response->json();

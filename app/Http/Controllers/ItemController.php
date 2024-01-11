@@ -25,16 +25,20 @@ class ItemController extends Controller
             "name" => trim($request->get("name")),
             "id_category" => $request->get("id_category"),
         ];
-        $validator = Validator::make($data, [
+        $id_tags = $request->get("id_tags") ?? [];
+        $validator = Validator::make(array_merge($data, ["id_tags" => $id_tags]), [
             "name" => "required|unique:App\Models\Item,name|max:100",
             "id_category" => "nullable|exists:App\Models\Category,id",
+            "id_tags.*" => "exists:App\Models\Tag,id",
+            "id_tags" => "array",
         ]);
         if ($validator->fails()) {
             return response()->json($validator->messages()->messages(), 400);
         }
         $item = Item::create($data);
+        $item->tags()->attach($id_tags);
 
-        return response()->json($item, 201);
+        return response()->json(array_merge(["id" => $item->id], $data, ["id_tags" => $id_tags]), 201);
     }
 
     public function update(Request $request, Item $item): JsonResponse
@@ -44,16 +48,20 @@ class ItemController extends Controller
             "name" => trim($request->get("name")),
             "id_category" => $request->get("id_category"),
         ];
-        $validator = Validator::make($data, [
+        $id_tags = $request->get("id_tags") ?? [];
+        $validator = Validator::make(array_merge($data, ["id_tags" => $id_tags]), [
             "name" => "required|unique:App\Models\Item,name|max:100",
             "id_category" => "nullable|exists:App\Models\Category,id",
+            "id_tags.*" => "exists:App\Models\Tag,id",
+            "id_tags" => "array",
         ]);
         if ($validator->fails()) {
             return response()->json($validator->messages()->messages(), 400);
         }
         $item->update($data);
+        $item->tags()->sync($id_tags);
 
-        return response()->json($item, 202);
+        return response()->json(array_merge($data, ["id_tags" => $id_tags]), 202);
     }
 
     public function destroy(Item $item): JsonResponse
