@@ -67,7 +67,6 @@ class ItemTest extends TestCase
         $attributesTag = ["id_tags" => [-1]];
         $response = $this->post("/api/items", array_merge($attributesItem, $attributesTag));
         $jsonArray = $response->json();
-        var_dump($jsonArray);
         $response->assertStatus(400);
         $this->assertDatabaseMissing("items", $attributesItem);
         $this->assertEquals("The name field is required.", $jsonArray["name"][0]);
@@ -130,4 +129,6 @@ class ItemTest extends TestCase
         $response->assertStatus(204);
         $this->assertDatabaseMissing("items", ["id" => $item->getKey()]);
     }
+
+
 }

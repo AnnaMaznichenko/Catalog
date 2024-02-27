@@ -26,7 +26,7 @@ class TagController extends Controller
             "name" => trim($request->get("name"))
         ];
         $validator = Validator::make($data, [
-            "name" => 'required|unique:App\Models\Tag,name|max:100'
+            "name" => 'required|unique:App\Models\Tag,name|max:100|regex:/^[\w\s\.]+$/'
         ]);
         if ($validator->fails()){
             return response()->json($validator->messages()->messages(), 400);
@@ -42,7 +42,7 @@ class TagController extends Controller
             "name" => trim($request->get("name"))
         ];
         $validator = Validator::make($data, [
-            "name" => 'required|unique:App\Models\Tag,name|max:100'
+            "name" => 'required|unique:App\Models\Tag,name|max:100|regex:/^[\w\s\.]+$/'
         ]);
         if ($validator->fails()){
             return response()->json($validator->messages()->messages(), 400);

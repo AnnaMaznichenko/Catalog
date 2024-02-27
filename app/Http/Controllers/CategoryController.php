@@ -26,7 +26,7 @@ class CategoryController extends Controller
             "id_category" => $request->get("id_category"),
         ];
         $validator = Validator::make($data, [
-            "name" => 'required|unique:App\Models\Category,name|max:100',
+            "name" => 'required|unique:App\Models\Category,name|max:100|regex:/^[\w\s\.]+$/',
             "id_category" => 'nullable|exists:App\Models\Category,id',
         ]);
         if ($validator->fails()){
@@ -45,7 +45,7 @@ class CategoryController extends Controller
             "id_category" => $request->get("id_category"),
         ];
         $validator = Validator::make($data, [
-            "name" => 'required|unique:App\Models\Category,name|max:100',
+            "name" => 'required|unique:App\Models\Category,name|max:100|regex:/^[\w\s\.]+$/',
             "id_category" => 'nullable|exists:App\Models\Category,id|different:id',
         ]);
         if ($validator->fails()){
