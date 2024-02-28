@@ -27,7 +27,7 @@ class ItemTest extends TestCase
         $this->assertCount(10, $jsonArray["data"]);
     }
 
-    public function test_items_show()
+    public function test_items_show(): void
     {
         $item = Item::factory()->create();
         $response = $this->get("/api/items/" . $item->getKey());
@@ -39,7 +39,7 @@ class ItemTest extends TestCase
         $this->assertArrayHasKey("tags", $jsonArray);
     }
 
-    public function test_items_create()
+    public function test_items_create(): void
     {
         $category = Category::factory()-> create();
         $tag = Tag::factory()->create();
@@ -58,7 +58,7 @@ class ItemTest extends TestCase
         ]);
     }
 
-    public function test_items_create_validation()
+    public function test_items_create_validation(): void
     {
         $attributesItem = [
             "name" => "",
@@ -74,7 +74,7 @@ class ItemTest extends TestCase
         $this->assertEquals("The selected id_tags.0 is invalid.", $jsonArray["id_tags.0"][0]);
     }
 
-    public function test_items_update()
+    public function test_items_update(): void
     {
         $item = Item::factory()->create();
         $category = Category::factory()-> create();
@@ -97,7 +97,7 @@ class ItemTest extends TestCase
         ]);
     }
 
-    public function test_item_update_validation()
+    public function test_item_update_validation(): void
     {
         $item = Item::factory()->create();
         $attributesItem = [
@@ -122,13 +122,11 @@ class ItemTest extends TestCase
         $this->assertEquals("The selected id_tags.0 is invalid.", $jsonArray["id_tags.0"][0]);
     }
 
-    public function test_item_delete()
+    public function test_item_delete(): void
     {
         $item = Item::factory()->create();
         $response = $this->delete("/api/items/" . $item->getKey());
         $response->assertStatus(204);
         $this->assertDatabaseMissing("items", ["id" => $item->getKey()]);
     }
-
-
 }
