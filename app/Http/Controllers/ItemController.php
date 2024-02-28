@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Exception;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use App\Services\ItemValidator;
 use App\Services\ExcelExporter;
+use App\Services\ExcelImporter;
 
 class ItemController extends Controller
 {
@@ -32,7 +34,8 @@ class ItemController extends Controller
             "id_category" => $request->get("id_category"),
         ];
         $id_tags = $request->get("id_tags") ?? [];
-        $itemValidation = $this->validateItem(array_merge($data, ["id_tags" => $id_tags]));
+        $validator = new ItemValidator();
+        $itemValidation = $validator->validateItem(array_merge($data, ["id_tags" => $id_tags]));
         if (!empty($itemValidation)) {
             return response()->json($itemValidation, 400);
         }
@@ -50,7 +53,8 @@ class ItemController extends Controller
             "id_category" => $request->get("id_category"),
         ];
         $id_tags = $request->get("id_tags") ?? [];
-        $itemValidation = $this->validateItem(array_merge($data, ["id_tags" => $id_tags]));
+        $validator = new ItemValidator();
+        $itemValidation = $validator->validateItem(array_merge($data, ["id_tags" => $id_tags]));
         if (!empty($itemValidation)) {
             return response()->json($itemValidation, 400);
         }
@@ -73,7 +77,7 @@ class ItemController extends Controller
         $this->sendFile($excelExporter->export());
     }
 
-    public function sendFile(Spreadsheet $spreadsheet): void
+    private function sendFile(Spreadsheet $spreadsheet): void
     {
         try {
             $excelWriter = new Xlsx($spreadsheet);
@@ -154,20 +158,5 @@ class ItemController extends Controller
         }
 
         return response()->json([$newItems, $existingItemRow, $notValidatedItemRow], 201);
-    }
-
-    public function validateItem(array $toValidate): array
-    {
-        $validator = Validator::make($toValidate, [
-            "name" => "required|unique:App\Models\Item,name|max:100|regex:/^[\w\s\.]+$/",
-            "id_category" => "nullable|exists:App\Models\Category,id",
-            "id_tags.*" => "exists:App\Models\Tag,id",
-            "id_tags" => "array",
-        ]);
-        if ($validator->fails()) {
-            return $validator->messages()->messages();
-        }
-
-        return [];
     }
 }
