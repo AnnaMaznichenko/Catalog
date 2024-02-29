@@ -2,18 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Category;
 use App\Models\Item;
-use App\Models\Tag;
+use App\Services\ExcelExporter;
+use App\Services\ExcelImporter\ExcelImporter;
+use App\Services\ItemValidator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Exception;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use App\Services\ItemValidator;
-use App\Services\ExcelExporter;
-use App\Services\ExcelImporter;
 
 class ItemController extends Controller
 {
@@ -91,7 +88,11 @@ class ItemController extends Controller
 
     public function import(Request $request): JsonResponse
     {
+        $file = $request->file("items")->getFileInfo()->getRealPath();
+        $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+        $spreadsheet = $reader->load($file);
         $importer = new ExcelImporter();
-        return $importer->import($request);
+
+        return response()->json($importer->import($spreadsheet), 201);
     }
 }

@@ -1,24 +1,22 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\ExcelImporter;
 
 use App\Models\Category;
 use App\Models\Item;
 use App\Models\Tag;
+use App\Services\ItemValidator;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+
 class ExcelImporter
 {
-    public function import(Request $request): JsonResponse
+    public function import(Spreadsheet $spreadsheet): ImportResult
     {
         $newItems = [];
         $existingItemRow = [];
         $notValidatedItemRow = [];
-        $file = $request->file("items")->getFileInfo()->getRealPath();
-        $reader = new Xlsx();
-        $spreadsheet = $reader->load($file);
         $i = 2;
         while ($spreadsheet->getActiveSheet()->getCell("A" . $i)->getCalculatedValue() !== null) {
             $ItemName = $spreadsheet->getActiveSheet()->getCell("A" . $i)->getCalculatedValue();
@@ -36,7 +34,7 @@ class ExcelImporter
                 $dataItem["id_category"] = $existingCategory->id;
             } else {
                 $validator = Validator::make(["name" => $categoryName], [
-                    "name" => 'required|unique:App\Models\Category,name|max:100|regex:/[\w\s\.]*/',
+                    "name" => 'required|unique:App\Models\Category,name|max:100|regex:/^[\w\s\.]+$/',
                 ]);
                 if ($validator->fails()) {
                     $notValidatedItemRow[] = $i - 1;
@@ -46,7 +44,7 @@ class ExcelImporter
                 $dataItem["id_category"] = $category->id;
             }
             $tagNames = explode(
-                " ",
+                ". ",
                 $spreadsheet->getActiveSheet()->getCell("C" . $i - 1)->getCalculatedValue()
             );
             if (count($tagNames) === 0) {
@@ -60,7 +58,7 @@ class ExcelImporter
                     $dataTags[] = $existingTag->id;
                 } else {
                     $validator = Validator::make(["name" => $tagName], [
-                        "name" => 'required|unique:App\Models\Tag,name|max:100|regex:/[\w\s\.]*/'
+                        "name" => 'required|unique:App\Models\Tag,name|max:100|regex:/^[\w\s\.]+$/'
                     ]);
                     if ($validator->fails()) {
                         $notValidatedItemRow[] = $i - 1;
@@ -79,7 +77,11 @@ class ExcelImporter
             $item->tags()->attach($dataTags);
             $newItems[] = array_merge(["id" => $item->id], $dataItem, ["id_tags" => $dataTags]);
         }
+        $importResult = new ImportResult();
+        $importResult->newItems = $newItems;
+        $importResult->existingItemRow = $existingItemRow;
+        $importResult->notValidatedItemRow = $notValidatedItemRow;
 
-        return response()->json([$newItems, $existingItemRow, $notValidatedItemRow], 201);
+        return $importResult;
     }
 }
